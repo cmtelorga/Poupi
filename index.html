@@ -5,18 +5,53 @@
     <!-- Sem maximum-scale: bloquear zoom prejudica acessibilidade (WCAG 1.4.4). -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#6366f1" />
-    <meta name="description" content="Poupi: educação financeira para crianças de 6 a 10 anos, com os pais junto." />
+    <meta name="description" content="Poupi: mesada que ensina. Potes de gastar, poupar e doar, metas, lições semanais e conversa em família, para crianças de 6 a 10 anos. Sem anúncios e sem cadastro." />
+    <link rel="canonical" href="https://cmtelorga.github.io/Poupi/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Poupi" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:title" content="Poupi: mesada que ensina, em família" />
+    <meta property="og:description" content="Gastar, poupar e doar. Educação financeira para crianças de 6 a 10 anos, com os pais junto. Sem anúncios e sem cadastro." />
+    <meta property="og:url" content="https://cmtelorga.github.io/Poupi/" />
+    <meta property="og:image" content="https://cmtelorga.github.io/Poupi/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Poupi, o porquinho da mesada em família" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Poupi: mesada que ensina, em família" />
+    <meta name="twitter:description" content="Gastar, poupar e doar. Educação financeira para crianças de 6 a 10 anos, com os pais junto." />
+    <meta name="twitter:image" content="https://cmtelorga.github.io/Poupi/og-image.png" />
+    <script type="application/ld+json">
+      {"@context":"https://schema.org","@type":"SoftwareApplication","name":"Poupi","applicationCategory":"EducationalApplication","operatingSystem":"Web (PWA)","inLanguage":"pt-BR","description":"Mesada e educação financeira para crianças de 6 a 10 anos, com os pais junto. Sem anúncios e sem cadastro.","url":"https://cmtelorga.github.io/Poupi/","offers":{"@type":"Offer","price":"0","priceCurrency":"BRL"},"audience":{"@type":"PeopleAudience","suggestedMinAge":6,"suggestedMaxAge":10}}
+    </script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Poupi" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
-    <title>Poupi</title>
+    <title>Poupi: mesada que ensina, em família</title>
   </head>
   <body>
-    <div id="root"></div>
-    <noscript>O Poupi precisa de JavaScript ativado.</noscript>
+    <!-- Conteúdo inicial indexável (buscadores e quem está sem JavaScript). O React substitui tudo isto ao abrir. -->
+    <div id="root">
+      <main style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:32px 20px;color:#1e293b;line-height:1.5">
+        <h1>🐷 Poupi: mesada que ensina, em família</h1>
+        <p>Educação financeira para crianças de 6 a 10 anos, com os pais junto.</p>
+        <ul>
+          <li>A mesada se divide em 3 potes: gastar, poupar e doar.</li>
+          <li>Metas de sonho e lista de desejos com tempo de espera antes de decidir.</li>
+          <li>Uma lição curta por semana e uma conversa sugerida para a família.</li>
+          <li>Tarefas de casa sem pagamento e trabalhos extras combinados.</li>
+          <li>Sem anúncios, sem cadastro: os dados ficam só no seu aparelho.</li>
+        </ul>
+        <p><a href="./privacidade.html">Privacidade</a></p>
+        <p>Carregando o Poupi…</p>
+      </main>
+    </div>
+    <noscript>
+      <p style="font-family:system-ui,sans-serif;max-width:560px;margin:16px auto;padding:0 20px">O Poupi precisa de JavaScript ativado para funcionar. Ele é gratuito, sem anúncios e guarda tudo só no seu aparelho. <a href="./privacidade.html">Leia como os dados são guardados</a>.</p>
+    </noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

@@ -45,6 +45,7 @@ Detalhes e referências: [`docs/PESQUISA.md`](docs/PESQUISA.md).
 - [`docs/FUNCIONALIDADES.md`](docs/FUNCIONALIDADES.md) — cada recurso e sua justificativa pedagógica
 - [`docs/DECISOES-TECNICAS.md`](docs/DECISOES-TECNICAS.md) — PWA × Android nativo e arquitetura
 - [`docs/BENCHMARK.md`](docs/BENCHMARK.md) — comparação com Greenlight, GoHenry, RoosterMoney, FamZoo, Gimi, Duolingo e Habitica
+- [`docs/PRIVACIDADE.md`](docs/PRIVACIDADE.md) — como os dados são tratados e o que falta para ter contas/sincronização
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — caminho até virar produto
 - [`docs/AVALIACAO-PROTOTIPO.md`](docs/AVALIACAO-PROTOTIPO.md) — o que estava errado na versão anterior e como foi corrigido
 
@@ -78,7 +79,7 @@ src/
     engine.js        mesada, juros, potes, pedidos, missões, níveis
     money.js         dinheiro sempre em centavos
     dates.js         datas no fuso local
-    lessons.js       12 microlições das crianças (versões 6–7 e 8–10 anos)
+    lessons.js       17 microlições das crianças (versões 6–7 e 8–10 anos)
     parentLessons.js 12 lições da Jornada dos Pais
     achievements.js  conquistas
     shop.js          loja do avatar e cores

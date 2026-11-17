@@ -10,13 +10,13 @@
 | **Trabalhos extras pagos** com aprovação | Início / Pais → Resumo | Trabalho gera renda, por escolha da criança. |
 | **Pedidos de gasto e doação** | Tocar nos potes | O dinheiro de verdade fica com os pais (modelo "banco da família"); o momento do pedido é o momento de ensinar (just-in-time). |
 | **Custo em semanas de mesada** | Pedido de gasto | Traduz preço em tempo/esforço, que é mais concreto. |
-| **Lista de desejos com espera de 1 dia** | Sonhos | Treino de gratificação adiada; desistir depois de pensar também é celebrado. |
-| **Banco da família com juros mensais** | Banco / Fazenda | Juros compostos visíveis (Stango & Zinman, 2009). Taxa alta de propósito e configurável. |
+| **Lista de desejos com espera proporcional ao preço** (1, 3 ou 7 dias, configurável) | Sonhos | Treino de gratificação adiada; desistir depois de pensar também é celebrado. |
+| **Banco da família com juros mensais** | Banco / Fazenda | Juros compostos visíveis (Stango & Zinman, 2009). Bônus da família de 1% por padrão, configurável, com comparação com o banco de verdade. |
 | **Fazendinha** derivada do saldo do banco | Banco / Fazenda | Representação concreta: 🌳 = dinheiro guardado, 🍎 = juros. Cresce com tempo e poupança, não com toques. |
 | **Simulador "e se eu deixar guardado?"** | Banco (8+) | Mostra o efeito do tempo sobre os juros. |
 | **Cartão virtual** | Banco (8+) | Simula o mundo real sem número de cartão realista. |
 | **Meta pessoal com previsão em semanas** | Sonhos | Metas específicas e com prazo; o progresso é visível. |
-| **12 microlições semanais com quiz** | Aprender | Duas versões por idade; uma por semana; errar não revela a resposta. |
+| **17 microlições semanais com quiz e pergunta de revisão** | Aprender | Duas versões por idade; uma por semana; errar não revela a resposta. |
 | **Papo da semana** | Pais → Resumo | Conversa guiada sobre a lição que a criança fez (Gudmunson & Danes). |
 | **Jornada dos Pais** (12 lições, desafios, níveis) | Pais → Jornada | Os pais aprendem a ciência por trás do app e a como conversar sobre dinheiro. |
 | **Meta cooperativa da família** + "Time da família" | Início / Pais → Família | Pertencimento (SDT). Substitui o ranking entre irmãos, que puniria a criança mais nova. |
@@ -35,3 +35,6 @@
 - **Pagamento por tarefa doméstica**: substituído por reconhecimento + trabalhos extras.
 - **Recompensa por "regar" a fazendinha**: o protótipo dava XP por toque repetido (mecânica de clique compulsivo).
 - **Dados realistas de cartão e sobrenome**: desnecessários e sensíveis.
+| **Reflexões** ("valeu a pena?" 7 dias depois; "como se sentiu?" ao doar) | Início | Aprender com as próprias decisões, sem nota e sem estrelas. |
+| **Resumo semanal para os pais** (compartilhável) | Pais → Início | Instrumenta a conversa e a modelagem em família. |
+| **Privacidade**, bloqueio do PIN e backup criptografado | Todas | Dados de crianças: consentimento do responsável, transparência e controle. |

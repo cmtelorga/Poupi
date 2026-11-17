@@ -5,7 +5,7 @@
  *   então um arquivo novo nunca é confundido com o antigo.
  * Trocar VERSION força a limpeza dos caches antigos.
  */
-const VERSION = 'poupi-v1';
+const VERSION = 'poupi-v2';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png'];
 
 self.addEventListener('install', (event) => {

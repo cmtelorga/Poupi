@@ -41,7 +41,7 @@ Legenda de força da evidência: 🟢 forte · 🟡 moderada / correlacional · 
 - **Fernandes, Lynch & Netemeyer (2014)**, *Management Science*, meta-análise com 201 estudos: intervenções de educação financeira explicam cerca de **0,1%** da variação no comportamento, e o efeito **decai com o tempo**. Os autores recomendam educação **just-in-time**, perto da decisão.
 - **Kaiser & Menkhoff (2017)**, *World Bank Economic Review*: efeitos maiores quando o ensino coincide com um momento de decisão.
 
-**No app:** o pedido de gasto mostra, na hora, quantas semanas do pote aquilo custa; a lista de desejos pede 1 dia de espera; o simulador de juros aparece onde está o dinheiro. As lições têm 2–3 min e saem **uma por semana**.
+**No app:** o pedido de gasto mostra, na hora, quantas semanas do pote aquilo custa; a lista de desejos pede um tempo de espera proporcional ao preço (1, 3 ou 7 dias, configurável); o simulador de juros aparece onde está o dinheiro. As lições têm 2–3 min e saem **uma por semana**.
 
 ## 6. Contabilidade mental e "nudges" 🟠
 
@@ -54,7 +54,7 @@ Legenda de força da evidência: 🟢 forte · 🟡 moderada / correlacional · 
 
 - **Stango & Zinman (2009)**, *Journal of Finance*: adultos subestimam sistematicamente o crescimento exponencial ("viés do crescimento exponencial"), o que se associa a mais dívida e menos poupança.
 
-**No app:** o banco rende 3% ao mês, alto de propósito para o efeito ser visível com valores pequenos (e configurável). A fazendinha transforma o saldo em árvores e os juros em frutas. Há também o simulador "e se eu deixar guardado?".
+**No app:** o "bônus da família" é de 1% ao mês por padrão (configurável; famílias que já usavam 3% mantêm o valor, com aviso). O simulador mostra também quanto renderia "num banco de verdade" (referência em `src/domain/config.js`). A fazendinha transforma o saldo em árvores e os juros em frutas. Há também o simulador "e se eu deixar guardado?".
 
 ## 8. Generosidade faz bem 🟡
 
@@ -98,3 +98,29 @@ Crianças de 6–7 anos estão saindo do estágio pré-operatório e entrando no
 | "Streaks estilo Duolingo" | Mantidos em versão **semanal e gentil**, porque sequências diárias com risco de perda são exatamente a mecânica de pressão que o próprio briefing proíbe. |
 
 > Antes de usar qualquer referência em material de venda, confira a fonte original. As citações acima vêm do conhecimento do assistente que montou o projeto e devem ser verificadas.
+
+---
+
+## Atualização de nov/2026
+
+Revisão feita a partir de uma pesquisa com meta-análises, dados do PISA 2022, normas brasileiras e levantamento de concorrentes. O que mudou no app e por quê. **Fato verificado**, **inferência** e **especulação** estão separados.
+
+| Decisão | Evidência | Nível | O que mudou |
+|---|---|---|---|
+| Juros de 3% a.m. (≈ 42,6% a.a., cerca de 3× a Selic de 13,75% a.a. citada na pesquisa) | Stango & Zinman (2009) para o viés exponencial; as taxas de mercado vêm de fontes de notícias e devem ser reconferidas | Moderada | Padrão de 1% para famílias novas; rótulo "bônus da família"; aviso quando > 1,5%; "cartão de realidade" no simulador |
+| Sequências que zeram | Aversão à perda (princípio); evidência em crianças é mista | Fraca a moderada | Sequência elástica: uma semana sem atividade não zera; sem mensagens de perda |
+| Espera fixa de 1 dia | Mischel (hot/cool); Kidd et al. (2013): a espera só funciona com adultos confiáveis. **Não há estudo de "24 h" em crianças.** | Fraca a moderada | Espera por faixa de preço (em mesadas), editável; mínimo 1 dia |
+| Prêmio por ajudar/doar | Deci, Koestner & Ryan (1999); Warneken & Tomasello (2008) | Moderada | Auditado: nenhuma tarefa de casa nem doação dá estrelas (agora com teste). Reflexão ("como você se sentiu?") sem nota e sem prêmio |
+| Conquista "Recebeu 5 obrigados" | O "obrigado" é feedback verbal dos pais por ajudar em casa (o código mostra isso); feedback verbal positivo não reduz a motivação (Deci et al., 1999) | Moderada | **Mantida.** A pesquisa externa sugeria remover, por entender que premiava a generosidade, mas ela mede agradecimento dos pais. Decisão do dono do produto, revisável |
+| Lições espaçadas | Cepeda et al. (2006); Roediger & Karpicke (2006) | Forte (espaçamento) | Trilha de 12 para 17 lições e 1 pergunta de revisão (recuperação) antes de cada lição nova |
+| Conteúdo faltante | Currículos de educação financeira (OCDE/PISA etc.) | Moderada | Novas lições: troco, planejar a semana, inflação, dinheiro em jogos, golpes. (Preciso×quero, preços e propaganda já existiam) |
+| Pós-compra | Reflexão e aprendizado com decisões | Fraca (indireta) | "Valeu a pena?" 7 dias depois de gastar, sem nota |
+| Socialização dos pais | Gudmunson & Danes (2011); Drever et al. (2015) | Moderada | Resumo semanal compartilhável, com conversa sugerida e dica de modelagem |
+| Privacidade de menores | LGPD art. 14; ECA Digital (Lei 15.211/2025, em vigor desde 17/03/2026) | Normativa | Consentimento do responsável no primeiro uso; política dentro do app e em `privacidade.html`; bloqueio de PIN; backup criptografado |
+
+**Limites e contradições conhecidos**
+- Efeitos de programas de educação financeira são pequenos no comportamento e decaem com o tempo (Fernandes, Lynch & Netemeyer, 2014; Kaiser et al., 2022). Nenhum app de mesada tem ensaio randomizado publicado, e o Poupi também não: a Fase 1.5 do roadmap deve medir uso e comportamento.
+- Quase toda a base sobre potes, espera e "eu futuro" vem de adultos; a extrapolação para 6–10 anos é razoável, mas não demonstrada.
+- Um incentivo forte (juros altos) pode gerar mais poupança no curto prazo; o ajuste preserva a opção (campo configurável), mas muda o padrão.
+- A pesquisa externa tinha afirmações de mercado não verificadas na fonte primária (listadas em `docs/BENCHMARK.md`).
+- A regulamentação técnica do ECA Digital estava em andamento; revisar em 2027 e validar com advogado.
