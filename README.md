@@ -4,7 +4,7 @@ Educação financeira para crianças de 6 a 10 anos, **com os pais junto**.
 
 App web instalável (PWA), funciona **sem internet** e **sem servidor**: tudo fica no aparelho da família. Sem anúncios, sem rastreamento, sem cadastro.
 
-**Abrir o app:** https://cmtelorga.github.io/poupi/
+**Abrir o app:** https://cmtelorga.github.io/Poupi/
 
 ---
 
