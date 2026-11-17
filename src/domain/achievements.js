@@ -4,6 +4,7 @@
  * Nenhuma conquista depende de tarefa doméstica paga.
  */
 import { weekStreak } from './engine.js';
+import { LESSONS } from './lessons.js';
 
 export const BADGES = [
   { id: 'mesada', emoji: '📅', title: 'Primeira mesada', test: (k, s) => s.history.some((h) => h.kidId === k.id && h.kind === 'mesada') },
@@ -17,9 +18,9 @@ export const BADGES = [
   { id: 'familia', emoji: '👨‍👩‍👧', title: 'Ajudou a meta da família', test: (k, s) => s.history.some((h) => h.kidId === k.id && h.kind === 'familia') },
   { id: 'ajudante', emoji: '💛', title: 'Recebeu 5 obrigados', test: (k) => k.thanksTotal >= 5 },
   { id: 'leitor', emoji: '📚', title: '3 lições', test: (k) => k.lessonsDone.length >= 3 },
-  { id: 'sabio', emoji: '🦉', title: 'Trilha completa', test: (k) => k.lessonsDone.length >= 12 },
-  { id: 'seq3', emoji: '🔥', title: '3 semanas seguidas', test: (k, s, today) => weekStreak(k, today) >= 3 },
-  { id: 'seq8', emoji: '🌟', title: '8 semanas seguidas', test: (k, s, today) => weekStreak(k, today) >= 8 },
+  { id: 'sabio', emoji: '🦉', title: 'Trilha completa', test: (k) => k.lessonsDone.length >= LESSONS.length },
+  { id: 'seq3', emoji: '🔥', title: '3 semanas ativas', test: (k, s, today) => weekStreak(k, today) >= 3 },
+  { id: 'seq8', emoji: '🌟', title: '8 semanas ativas', test: (k, s, today) => weekStreak(k, today) >= 8 },
 ];
 
 export const badgesFor = (kid, state, today) => BADGES.filter((b) => b.test(kid, state, today));

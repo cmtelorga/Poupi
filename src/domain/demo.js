@@ -1,11 +1,12 @@
 /**
  * MODO DEMONSTRAÇÃO — família fictícia para testar o app em 1 minuto.
  * Nomes fictícios de propósito: nenhum dado real fica no código.
- * PIN dos pais da demonstração: 1234.
+ * PIN dos pais da demonstração: 1234 (mostrado só dentro da demo, no teclado do PIN).
  */
 import { newState } from './state.js';
 import { addDays, weekdayOf } from './dates.js';
 import * as E from './engine.js';
+import { badgesFor } from './achievements.js';
 
 export const DEMO_PIN = '1234';
 
@@ -34,5 +35,7 @@ export const buildDemo = (today) => {
   s = E.thankKid(s, tom.id);
   s = E.runAutomations(s, today).state;
   s = E.createRequest(s, { kidId: tom.id, type: 'gastar', amount: 300, title: 'Picolé', emoji: '🍦' }, today);
+  // A demo não deve abrir com um modal de conquistas: marca as atuais como já vistas.
+  s = { ...s, isDemo: true, kids: s.kids.map((k) => ({ ...k, seenBadges: badgesFor(k, s, today).map((b) => b.id) })) };
   return s;
 };

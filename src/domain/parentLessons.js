@@ -70,9 +70,9 @@ export const PARENT_LESSONS = [
     id: 'p-juros', emoji: '📈', title: 'Ninguém entende juros compostos de cabeça', minutes: 2,
     body: 'Até adultos subestimam como juros sobre juros crescem — o "viés do crescimento exponencial". Isso afeta tanto poupar quanto se endividar. Ver acontecer, mês a mês, ensina mais que a fórmula.',
     evidence: 'Stango & Zinman (2009) documentaram o viés do crescimento exponencial em adultos e sua relação com mais dívida e menos poupança. Evidência: forte em adultos.',
-    inApp: 'O banco da família rende 3% ao mês (configurável). É alto de propósito: com valores pequenos, juros "realistas" seriam invisíveis. Na fazendinha, as frutas são os juros.',
+    inApp: 'O banco da família paga um "bônus da família" de 1% ao mês por padrão (você configura em Ajustes). Os pais é que "pagam" esse bônus. Taxas bem maiores que a de um banco real ensinam que o dinheiro cresce rápido demais, por isso o simulador mostra também quanto renderia "no banco de verdade". Na fazendinha, as frutas são os juros.',
     challenge: 'Mostre o histórico de juros e conversem: "o que acontece se ninguém mexer nisso por um ano?"',
-    quiz: { q: 'Por que a taxa do banco do Poupi é mais alta que a real?', options: ['Erro do app', 'Para o efeito dos juros ficar visível com pouco dinheiro', 'Para dar lucro'], correct: 1 },
+    quiz: { q: 'Por que o Poupi mostra também quanto renderia num banco de verdade?', options: ['Para desanimar a criança', 'Para a criança não achar que o dinheiro sempre cresce tão rápido', 'Para cobrar taxa'], correct: 1 },
   },
   {
     id: 'p-elogio', emoji: '👏', title: 'Elogie a estratégia, não a criança', minutes: 2,

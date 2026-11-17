@@ -20,8 +20,9 @@
  */
 import { todayKey, monthKey, addDays } from './dates.js';
 import { hashPin, uid } from './ids.js';
+import { DEFAULT_INTEREST_BPS, DEFAULT_WISH_WAIT } from './config.js';
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 /** Crianças até 7 anos usam o modo "pequeno" (lúdico); 8+ usam o modo "grande" (autônomo). */
 export const isLittle = (kid) => kid.age <= 7;
@@ -53,7 +54,7 @@ export const newKid = ({ name, age, emoji, color, allowance }, today = todayKey(
   interestEarned: 0,
   split: { ...DEFAULT_SPLIT },
   allowance, // centavos por semana
-  interestBps: 300, // 3% ao mês — alto de propósito para ser VISÍVEL (ver docs)
+  interestBps: DEFAULT_INTEREST_BPS, // "bônus da família": 1% ao mês por padrão (docs/PESQUISA.md); famílias antigas mantêm o que já tinham
   lastAllowanceDate: addDays(today, -1), // a primeira mesada já cai se hoje for o dia
   lastInterestMonth: monthKey(today),
   startDate: today,
@@ -78,11 +79,12 @@ export const newState = ({ pin, allowanceWeekday = 6 }) => ({
   version: SCHEMA_VERSION,
   createdAt: todayKey(),
   pinHash: hashPin(pin),
-  settings: { allowanceWeekday }, // 0=domingo ... 6=sábado
+  settings: { allowanceWeekday, wishWait: { ...DEFAULT_WISH_WAIT } }, // 0=domingo ... 6=sábado
   kids: [],
   jobs: [], // trabalhos extras PAGOS e opcionais
   requests: [], // pedidos que os pais aprovam
   history: [],
+  reviews: [], // reflexões: "valeu a pena?" (gasto) e "como se sentiu?" (doação)
   familyGoal: null, // { title, emoji, target, saved }
   familyGoalsDone: 0,
   parent: {
@@ -93,9 +95,20 @@ export const newState = ({ pin, allowanceWeekday = 6 }) => ({
   },
 });
 
-/** Migração de versões futuras do formato salvo. */
+/**
+ * Migração de versões salvas. v1 → v2 só ACRESCENTA campos (nada é apagado):
+ * famílias antigas mantêm a taxa de juros que já tinham.
+ */
 export const migrate = (saved) => {
   if (!saved || typeof saved !== 'object') return null;
   if (saved.version === SCHEMA_VERSION) return saved;
+  if (saved.version === 1 && Array.isArray(saved.kids)) {
+    return {
+      ...saved,
+      version: SCHEMA_VERSION,
+      settings: { ...saved.settings, wishWait: { ...DEFAULT_WISH_WAIT, ...(saved.settings?.wishWait || {}) } },
+      reviews: saved.reviews || [],
+    };
+  }
   return null; // formato desconhecido (ex.: protótipo antigo): começa do zero
 };

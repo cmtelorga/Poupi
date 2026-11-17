@@ -1,5 +1,5 @@
 /**
- * TRILHA DAS CRIANÇAS — 12 microlições (uma por semana, 2–3 min).
+ * TRILHA DAS CRIANÇAS — 17 microlições (uma por semana, 2–3 min).
  *
  * Cada lição tem DUAS versões:
  *   little (6–7 anos): frase curta, pode ser ouvida (🔊), respostas com emoji.
@@ -190,6 +190,86 @@ export const LESSONS = [
       correct: 0,
     },
     talk: 'Conte um erro seu com dinheiro e o que você aprendeu. Crianças aprendem muito com a honestidade dos pais.',
+  },
+  {
+    id: 'troco', emoji: '🪙', title: 'Moedas e troco',
+    little: {
+      text: 'Você paga com uma nota grande e a loja devolve o que sobra. O que sobra se chama troco!',
+      quiz: 'Pagou com uma nota grande e a conta era pequena. O que volta para você?',
+      options: [{ e: '🪙', t: 'O troco' }, { e: '🎁', t: 'Um presente' }, { e: '🍬', t: 'Nada' }],
+      correct: 0,
+    },
+    big: {
+      text: 'Troco é a diferença entre o que você entrega e o que você deve. Se a conta é R$ 7 e você paga com R$ 10, o troco é R$ 3. Conferir o troco é um hábito de quem cuida do próprio dinheiro: todo mundo erra às vezes, até o caixa.',
+      quiz: 'A conta deu R$ 12 e você pagou com R$ 20. Qual é o troco?',
+      options: [{ t: 'R$ 6' }, { t: 'R$ 8' }, { t: 'R$ 10' }],
+      correct: 1,
+    },
+    talk: 'Na próxima compra, deixe a criança pagar e conferir o troco, mesmo que você já saiba o valor.',
+  },
+  {
+    id: 'orcamento', emoji: '📝', title: 'Planejar a semana',
+    little: {
+      text: 'Antes de gastar, a gente pensa: o que eu quero fazer com meu dinheiro esta semana?',
+      quiz: 'Quando é melhor pensar no que vai comprar?',
+      options: [{ e: '🤔', t: 'Antes de gastar' }, { e: '😮', t: 'Depois que acabou' }],
+      correct: 0,
+    },
+    big: {
+      text: 'Orçamento é um plano simples: quanto eu tenho, quanto quero gastar e quanto vou guardar. Se você sabe que vai querer um lanche na escola toda sexta, já separa esse dinheiro antes. Planejar não tira a graça: evita a surpresa de ficar sem dinheiro no meio da semana.',
+      quiz: 'Qual é o primeiro passo de um orçamento?',
+      options: [{ t: 'Saber quanto dinheiro eu tenho' }, { t: 'Gastar tudo logo' }, { t: 'Pedir mais mesada' }],
+      correct: 0,
+    },
+    talk: 'Peça para a criança dizer, na segunda-feira, uma coisa em que pretende gastar e uma que pretende guardar.',
+  },
+  {
+    id: 'inflacao', emoji: '📈', title: 'Por que as coisas ficam mais caras?',
+    little: {
+      text: 'Com o tempo, as coisas ficam um pouquinho mais caras. O mesmo dinheiro compra um pouco menos.',
+      quiz: 'O picolé custava pouco e agora custa mais. O que mudou?',
+      options: [{ e: '🏷️', t: 'O preço subiu' }, { e: '🍦', t: 'O picolé encolheu sozinho' }],
+      correct: 0,
+    },
+    big: {
+      text: 'Chamamos de inflação quando os preços sobem com o tempo. Por isso, dinheiro parado perde um pouco de força: com os mesmos R$ 10 você compra menos coisas no ano que vem. Quando o banco paga juros, uma parte serve só para compensar essa perda.',
+      quiz: 'O que a inflação faz com o dinheiro guardado em casa, sem render?',
+      options: [{ t: 'Ele compra um pouco menos com o tempo' }, { t: 'Ele compra mais com o tempo' }, { t: 'Nada muda' }],
+      correct: 0,
+    },
+    talk: 'Lembrem juntos de um preço de alguns anos atrás (um sorvete, um ingresso) e comparem com o de hoje.',
+  },
+  {
+    id: 'jogos', emoji: '🎮', title: 'Dinheiro dentro dos jogos',
+    little: {
+      text: 'Em alguns jogos dá para comprar coisas. Isso gasta dinheiro de verdade. Sempre pergunte antes para papai ou mamãe!',
+      quiz: 'O que você faz antes de comprar algo no jogo?',
+      options: [{ e: '🙋', t: 'Pergunto para um adulto' }, { e: '👆', t: 'Aperto logo' }],
+      correct: 0,
+    },
+    big: {
+      text: 'Moedas, "skins" e caixas surpresa dentro de jogos são feitas para dar vontade de gastar. As moedas parecem de brinquedo, mas custam dinheiro de verdade. Antes de comprar, aplique a regra do Poupi: espere, pense e converse com seus pais.',
+      quiz: 'Por que é bom esperar um dia antes de comprar algo num jogo?',
+      options: [{ t: 'Porque a vontade do momento passa e dá para decidir com calma' }, { t: 'Porque o jogo some' }, { t: 'Não faz diferença' }],
+      correct: 0,
+    },
+    talk: 'Combinem uma regra de família para compras em jogos (sempre perguntar antes) e conversem sobre como os jogos "convidam" a gastar.',
+  },
+  {
+    id: 'golpes', emoji: '🔐', title: 'Cuidado com golpes',
+    little: {
+      text: 'Senha e PIN são segredos. Quem pede sua senha por mensagem quer enganar você. Conte para um adulto!',
+      quiz: 'Alguém pediu a senha de papai pelo celular. O que você faz?',
+      options: [{ e: '🙅', t: 'Não dou e aviso um adulto' }, { e: '📩', t: 'Mando a senha' }],
+      correct: 0,
+    },
+    big: {
+      text: 'Golpistas usam mensagens com pressa ("ganhe agora!", "sua conta será bloqueada") para você agir sem pensar. Nunca passe senha, PIN, código recebido por SMS ou dados dos seus pais. Se algo parecer bom demais, pare, espere e conte para um adulto de confiança.',
+      quiz: 'Uma mensagem diz: "Você ganhou um prêmio! Clique agora e informe o código." O que é mais seguro?',
+      options: [{ t: 'Não clicar e mostrar para um adulto' }, { t: 'Clicar rápido antes que acabe' }, { t: 'Mandar o código só dessa vez' }],
+      correct: 0,
+    },
+    talk: 'Contem um golpe que você ou alguém conhecido quase caiu. Combinem uma "palavra de segurança" da família.',
   },
   {
     id: 'plano', emoji: '🗺️', title: 'Seu plano de dinheiro',

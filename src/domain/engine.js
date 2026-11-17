@@ -7,6 +7,7 @@ import { splitIntoJars, jarsTotal, brl } from './money.js';
 import { addDays, weekdayOf, monthKey, monthsAfter, weekKey, daysBetween } from './dates.js';
 import { uid } from './ids.js';
 import { newKid } from './state.js';
+import { DEFAULT_WISH_WAIT, STREAK_GRACE_WEEKS } from './config.js';
 
 // ---------------------------------------------------------------------------
 // utilidades
@@ -58,6 +59,7 @@ export const removeKid = (state, kidId) => ({
   kids: state.kids.filter((k) => k.id !== kidId),
   requests: state.requests.filter((r) => r.kidId !== kidId),
   history: state.history.filter((h) => h.kidId !== kidId),
+  reviews: (state.reviews || []).filter((r) => r.kidId !== kidId),
 });
 
 // ---------------------------------------------------------------------------
@@ -234,7 +236,7 @@ export const resolveRequest = (state, reqId, approve, today) => {
     jars: { ...k.jars, [req.type]: k.jars[req.type] - req.amount },
     stats: req.type === 'doar' ? { ...k.stats, donations: k.stats.donations + 1 } : k.stats,
   }));
-  return addTx(s, {
+  s = addTx(s, {
     kidId: kid.id,
     date: today,
     kind: req.type === 'doar' ? 'doacao' : 'gasto',
@@ -243,18 +245,73 @@ export const resolveRequest = (state, reqId, approve, today) => {
     effect: 'out',
     jar: req.type,
   });
+  return addReview(s, { kidId: kid.id, kind: req.type === 'doar' ? 'doacao' : 'gasto', title: req.title, amount: req.amount, date: today });
+};
+
+// ---------------------------------------------------------------------------
+// reflexões: "valeu a pena?" (gasto, 7 dias depois) e "como se sentiu?" (doação)
+// ---------------------------------------------------------------------------
+/**
+ * Reflexão SEM nota e SEM estrelas: dar prêmio por doar/refletir reduziria a
+ * motivação própria (Deci, Koestner & Ryan, 1999; Warneken & Tomasello, 2008).
+ * Serve para a criança perceber o que sentiu e para os pais terem assunto.
+ */
+export const REVIEW_AFTER_DAYS = 7;
+export const REVIEW_ANSWERS = ['bom', 'meio', 'ruim'];
+
+const addReview = (state, { kidId, kind, title, amount, date }) => ({
+  ...state,
+  reviews: [
+    { id: uid('rv'), kidId, kind, title, amount, date, dueDate: kind === 'gasto' ? addDays(date, REVIEW_AFTER_DAYS) : date, answer: null },
+    ...(state.reviews || []),
+  ].slice(0, 300),
+});
+
+export const pendingReviews = (state, kidId, today) =>
+  (state.reviews || []).filter((r) => r.kidId === kidId && !r.answer && r.dueDate <= today);
+
+export const answerReview = (state, reviewId, answer, today) => {
+  if (!REVIEW_ANSWERS.includes(answer)) fail('Resposta inválida.');
+  return { ...state, reviews: (state.reviews || []).map((r) => (r.id === reviewId ? { ...r, answer, answeredDate: today } : r)) };
+};
+
+/** Contagem simples para os pais: { gasto: {bom, meio, ruim}, doacao: {...} } */
+export const reviewSummary = (state, kidId) => {
+  const out = { gasto: { bom: 0, meio: 0, ruim: 0 }, doacao: { bom: 0, meio: 0, ruim: 0 } };
+  for (const r of state.reviews || []) if (r.kidId === kidId && r.answer) out[r.kind][r.answer] += 1;
+  return out;
 };
 
 // ---------------------------------------------------------------------------
 // lista de desejos — "pense até amanhã" (gratificação adiada)
 // ---------------------------------------------------------------------------
-export const WISH_WAIT_DAYS = 1;
+export const WISH_WAIT_DAYS = 1; // mínimo (e valor dos desejos criados antes da v2)
 
-export const addWish = (state, kidId, { title, emoji, price }, today) =>
-  updateKid(state, kidId, (k) =>
-    markActivity({ ...k, wishes: [{ id: uid('w'), title, emoji, price, date: today }, ...k.wishes] }, today, 'desejo'));
+/**
+ * A espera cresce com o preço (em "mesadas"), configurável pelos pais.
+ * Não há estudo que teste "esperar 24 h" em crianças: a base é indireta
+ * (teoria hot/cool de Mischel; Kidd et al., 2013 — a espera só funciona se
+ * os adultos cumprem o combinado). Ver docs/PESQUISA.md.
+ */
+export const wishWaitDays = (state, kid, price) => {
+  const cfg = { ...DEFAULT_WISH_WAIT, ...(state.settings?.wishWait || {}) };
+  const a = kid.allowance || 0;
+  const days = (n) => Math.max(1, Math.round(n) || 1);
+  if (!price || a <= 0) return days(cfg.smallDays);
+  if (price > cfg.bigFromAllowances * a) return days(cfg.bigDays);
+  if (price > cfg.midFromAllowances * a) return days(cfg.midDays);
+  return days(cfg.smallDays);
+};
 
-export const wishReady = (wish, today) => daysBetween(wish.date, today) >= WISH_WAIT_DAYS;
+export const addWish = (state, kidId, { title, emoji, price }, today) => {
+  const waitDays = wishWaitDays(state, getKid(state, kidId), price);
+  return updateKid(state, kidId, (k) =>
+    markActivity({ ...k, wishes: [{ id: uid('w'), title, emoji, price, date: today, waitDays }, ...k.wishes] }, today, 'desejo'));
+};
+
+export const wishWait = (wish) => wish.waitDays ?? WISH_WAIT_DAYS;
+export const wishReady = (wish, today) => daysBetween(wish.date, today) >= wishWait(wish);
+export const wishDaysLeft = (wish, today) => Math.max(0, wishWait(wish) - daysBetween(wish.date, today));
 
 /** Desistir depois de pensar: comemorado (decidir NÃO comprar também é uma boa decisão). */
 export const giveUpWish = (state, kidId, wishId, today) => {
@@ -387,17 +444,26 @@ export const claimMission = (state, kidId, missionId, today) => {
 };
 
 /**
- * Sequência em SEMANAS, não dias. Uma semana conta se a criança resgatou ao
- * menos 1 missão. A semana atual ainda em andamento não quebra a sequência.
+ * Sequência ELÁSTICA em semanas ("semanas ativas"). Uma semana conta se a
+ * criança resgatou ao menos 1 missão. Uma semana sem atividade NÃO zera: só
+ * duas semanas vazias seguidas encerram a contagem. A semana atual em
+ * andamento nunca quebra nada. Sem mensagem de perda: sequências que zeram
+ * exploram a aversão à perda e geram ansiedade (docs/PESQUISA.md).
  */
-export const weekStreak = (kid, today) => {
+export const elasticStreak = (hasWeek, today) => {
   let w = weekKey(today);
-  const has = (wk) => (kid.claimedMissions[wk] || []).length > 0;
-  let streak = 0;
-  if (!has(w)) w = addDays(w, -7);
-  while (has(w)) { streak += 1; w = addDays(w, -7); }
-  return streak;
+  if (!hasWeek(w)) w = addDays(w, -7);
+  let active = 0;
+  let gap = 0;
+  for (let i = 0; i < 520; i++) {
+    if (hasWeek(w)) { active += 1; gap = 0; }
+    else { gap += 1; if (gap > STREAK_GRACE_WEEKS) break; }
+    w = addDays(w, -7);
+  }
+  return active;
 };
+
+export const weekStreak = (kid, today) => elasticStreak((wk) => (kid.claimedMissions[wk] || []).length > 0, today);
 
 // ---------------------------------------------------------------------------
 // lições
@@ -448,12 +514,8 @@ export const recordTalk = (state, kidId, lessonId, today) =>
     ? state
     : { ...state, parent: { ...state.parent, xp: state.parent.xp + PARENT_XP.talk, talks: [...state.parent.talks, { kidId, lessonId, date: today }] } };
 
-/** Semanas seguidas com pelo menos um papo registrado. */
+/** Semanas ativas com pelo menos um papo registrado (sequência elástica, sem zerar). */
 export const parentTalkStreak = (state, today) => {
   const weeks = new Set(state.parent.talks.map((t) => weekKey(t.date)));
-  let w = weekKey(today);
-  if (!weeks.has(w)) w = addDays(w, -7);
-  let n = 0;
-  while (weeks.has(w)) { n += 1; w = addDays(w, -7); }
-  return n;
+  return elasticStreak((wk) => weeks.has(wk), today);
 };
