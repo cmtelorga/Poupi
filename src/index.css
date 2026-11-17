@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Nunito: arredondada e amigável, comum em apps infantis. Vem empacotada
+  (@fontsource) em vez do Google Fonts, para funcionar offline e não
+  enviar dados de acesso a terceiros.
+*/
+html, body { background: #f8fafc; color: #1e293b; }
+body {
+  font-family: 'Nunito', system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+/* 16px nos campos evita o zoom automático do iOS sem bloquear o zoom manual. */
+input, select, textarea { font-size: 16px; }
+button { touch-action: manipulation; }
+:focus-visible { outline: 3px solid #818cf8; outline-offset: 2px; border-radius: 12px; }
+
+.safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { scrollbar-width: none; }
+
+/* Animações sutis: reforço positivo sem distrair. */
+.fade-in { animation: fade .3s ease-out both; }
+@keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.pop { animation: pop .35s ease-out both; }
+@keyframes pop { 0% { transform: scale(.85); } 60% { transform: scale(1.06); } 100% { transform: scale(1); } }
+.float { animation: float 3s ease-in-out infinite; }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.fill-anim { transition: height .7s cubic-bezier(.4,0,.2,1), width .7s cubic-bezier(.4,0,.2,1); }
+.wiggle { animation: wiggle .5s ease-in-out; }
+@keyframes wiggle { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-4deg); } 75% { transform: rotate(4deg); } }
+
+.confetti-piece {
+  position: fixed; top: -12px; width: 10px; height: 10px; z-index: 9999; pointer-events: none;
+  animation: confetti-fall 2.6s linear forwards;
+}
+@keyframes confetti-fall { to { transform: translateY(105vh) rotate(720deg); opacity: 0; } }
+
+/* Quem pede menos movimento no sistema não recebe animações. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
