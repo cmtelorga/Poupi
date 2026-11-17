@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../../store.jsx';
-import { Card, Button, Modal, Field, MoneyInput, SectionTitle, Empty, EmojiPicker, PinPad, Progress, inputClass, confetti, cx, color } from '../../ui/kit.jsx';
+import { Card, Button, Modal, Field, MoneyInput, SectionTitle, Empty, EmojiPicker, PinPad, PasswordModal, Progress, inputClass, confetti, cx, color } from '../../ui/kit.jsx';
 import { brlShort, toCents, centsToInput } from '../../domain/money.js';
 import { WEEKDAYS, formatDate } from '../../domain/dates.js';
 import * as E from '../../domain/engine.js';
@@ -10,6 +10,8 @@ import { isLittle } from '../../domain/state.js';
 import { exportBackup, readBackup, clearState } from '../../storage.js';
 import { KidForm } from '../Onboarding.jsx';
 import { GoalModal } from '../kid/modals.jsx';
+import { PrivacyModal } from '../Privacy.jsx';
+import { DEFAULT_WISH_WAIT, INTEREST_WARN_BPS, MARKET_REF } from '../../domain/config.js';
 
 const TASK_EMOJIS = ['🛏️', '🧸', '🍽️', '♻️', '🧺', '🐶', '🪴', '👟', '🧹', '📚', '🦷', '🚗'];
 
@@ -394,11 +396,18 @@ export function SettingsPage() {
   const [adding, setAdding] = useState(false);
   const [pinStep, setPinStep] = useState(null);
   const [goalFor, setGoalFor] = useState(null);
+  const [backupAsk, setBackupAsk] = useState(false);
+  const [askPass, setAskPass] = useState(null); // { resolve }
+  const [privacy, setPrivacy] = useState(false);
 
   const restore = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    try { replace(await readBackup(file)); notify('Backup restaurado!'); } catch (err) { notify(err.message, 'error'); }
+    try {
+      replace(await readBackup(file, () => new Promise((resolve) => setAskPass({ resolve }))));
+      notify('Backup restaurado!');
+    } catch (err) { notify(err.message, 'error'); }
+    e.target.value = '';
   };
 
   return (
@@ -411,7 +420,7 @@ export function SettingsPage() {
               <span className="text-3xl">{k.emoji}</span>
               <div className="flex-1">
                 <p className="font-bold">{k.name}, {k.age}</p>
-                <p className="text-xs text-slate-500">{brlShort(k.allowance)}/sem · potes {k.split.gastar}/{k.split.poupar}/{k.split.doar} · juros {(k.interestBps / 100).toLocaleString('pt-BR')}%</p>
+                <p className="text-xs text-slate-500">{brlShort(k.allowance)}/sem · potes {k.split.gastar}/{k.split.poupar}/{k.split.doar} · bônus {(k.interestBps / 100).toLocaleString('pt-BR')}% ao mês</p>
               </div>
               <div className="flex flex-col gap-1">
                 <Button size="sm" variant="soft" onClick={() => setEditing(k)}>Ajustar</Button>
@@ -432,15 +441,19 @@ export function SettingsPage() {
         </div>
       </Card>
 
+      <WishWaitCard />
+
       <Card className="space-y-3">
         <SectionTitle>🔐 Segurança e dados</SectionTitle>
         <p className="text-sm text-slate-500">Tudo fica só neste aparelho. Faça backup de vez em quando: limpar os dados do navegador apaga o Poupi.</p>
         <Button variant="soft" className="w-full" onClick={() => setPinStep('new')}>Trocar PIN</Button>
-        <Button variant="soft" className="w-full" onClick={() => exportBackup(state)}>⬇️ Baixar backup</Button>
+        <Button variant="soft" className="w-full" onClick={() => setBackupAsk(true)}>⬇️ Baixar backup</Button>
         <label className="w-full min-h-[48px] rounded-2xl bg-slate-100 text-slate-700 font-extrabold flex items-center justify-center cursor-pointer">
           ⬆️ Restaurar backup
           <input type="file" accept="application/json" className="hidden" onChange={restore} />
         </label>
+        <p className="text-xs text-slate-500">O PIN impede que a criança entre aqui, mas não protege contra quem tem acesso ao aparelho. Depois de 5 erros, o PIN bloqueia por alguns instantes.</p>
+        <Button variant="soft" className="w-full" onClick={() => setPrivacy(true)}>🔒 Privacidade: como os dados são guardados</Button>
         <Button variant="danger" className="w-full" onClick={() => {
           if (window.confirm('Apagar TODOS os dados do Poupi neste aparelho? Isso não pode ser desfeito.')) { clearState(); replace(null); }
         }}>Apagar tudo</Button>
@@ -448,6 +461,14 @@ export function SettingsPage() {
 
       <p className="text-center text-xs text-slate-400 pb-2">Poupi 1.0 · código aberto · sem anúncios, sem rastreamento</p>
 
+      {privacy && <PrivacyModal onClose={() => setPrivacy(false)} />}
+      {backupAsk && (
+        <PasswordModal title="⬇️ Baixar backup" confirm optional submitLabel="Baixar"
+          hint="Opcional: crie uma senha para criptografar o arquivo. Sem a senha, não dá para abrir o backup, então guarde bem. Deixe vazio para baixar sem criptografia."
+          onClose={() => setBackupAsk(false)}
+          onSubmit={async (pw) => { setBackupAsk(false); try { await exportBackup(state, pw); notify(pw ? 'Backup criptografado baixado!' : 'Backup baixado!'); } catch { notify('Não foi possível criar o backup.', 'error'); } }} />
+      )}
+      {askPass && <PasswordModal title="🔐 Backup protegido" hint="Digite a senha criada ao baixar este backup." submitLabel="Abrir" onClose={() => { askPass.resolve(''); setAskPass(null); }} onSubmit={(pw) => { askPass.resolve(pw); setAskPass(null); }} />}
       {editing && <KidSettingsModal kid={editing} onClose={() => setEditing(null)} />}
       {goalFor && <GoalModal kid={E.getKid(state, goalFor.id)} title={`🎯 Sonho de ${goalFor.name}`} onClose={() => setGoalFor(null)} />}
       {adding && (
@@ -479,10 +500,12 @@ function KidSettingsModal({ kid, onClose }) {
   const [split, setSplit] = useState(kid.split);
   const [rate, setRate] = useState(String(kid.interestBps / 100).replace('.', ','));
   const sum = split.gastar + split.poupar + split.doar;
+  const rateBps = Math.round((Number(String(rate).replace(',', '.')) || 0) * 100);
+  const rateWarn = rateBps > INTEREST_WARN_BPS;
   const save = () => {
     const a = toCents(allowance);
     const r = Number(String(rate).replace(',', '.'));
-    if (Number.isNaN(a) || a < 0 || !(r >= 0 && r <= 20) || !name.trim()) { notify('Confira os valores.', 'error'); return; }
+    if (Number.isNaN(a) || a < 0 || !(r >= 0 && r <= 10) || !name.trim()) { notify('Confira os valores.', 'error'); return; }
     if (act(E.updateKidSettings, kid.id, { name: name.trim(), age: Number(age), allowance: a, split, interestBps: Math.round(r * 100) })) {
       notify('Salvo!');
       onClose();
@@ -509,12 +532,45 @@ function KidSettingsModal({ kid, onClose }) {
           ))}
           {sum !== 100 && <p className="text-rose-500 font-bold text-sm mt-1">Precisa somar 100%.</p>}
         </Field>
-        <Field label="Juros do banco (% ao mês)" hint="3% é alto de propósito: com valores pequenos, juros reais (~1%) seriam invisíveis.">
+        <Field label="Bônus da família (% ao mês)" hint={`Quem "paga" esse bônus são vocês, os pais. Padrão: 1%, parecido com o de um banco de verdade (${MARKET_REF.checkedAt}). Taxas muito maiores ensinam que o dinheiro cresce rápido demais.`}>
           <input className={inputClass} inputMode="decimal" value={rate} onChange={(e) => setRate(e.target.value)} />
+          {rateWarn && <p className="text-amber-700 bg-amber-50 rounded-xl p-3 text-sm font-bold mt-2">⚠️ Isso é cerca de {Math.round((rateBps / MARKET_REF.bps) * 10) / 10}× o que um banco paga hoje. A criança pode achar que o dinheiro sempre cresce assim. O simulador vai mostrar a comparação com o banco de verdade.</p>}
         </Field>
         <Button size="lg" className="w-full" disabled={sum !== 100} onClick={save}>Salvar</Button>
         <Button variant="ghost" className="w-full !text-rose-500" onClick={remove}>Remover criança</Button>
       </div>
     </Modal>
+  );
+}
+
+
+/** Espera dos desejos por faixa de preço (em "mesadas"). O mínimo é sempre 1 dia. */
+function WishWaitCard() {
+  const { state, act, notify } = useStore();
+  const cfg = { ...DEFAULT_WISH_WAIT, ...(state.settings.wishWait || {}) };
+  const [small, setSmall] = useState(String(cfg.smallDays));
+  const [mid, setMid] = useState(String(cfg.midDays));
+  const [big, setBig] = useState(String(cfg.bigDays));
+  const n = (v) => Math.max(1, Math.min(30, Math.round(Number(v) || 1)));
+  const save = () => {
+    act((st) => ({ ...st, settings: { ...st.settings, wishWait: { ...cfg, smallDays: n(small), midDays: n(mid), bigDays: n(big) } } }));
+    notify('Espera salva!');
+  };
+  const row = (label, v, set) => (
+    <div className="flex items-center gap-3">
+      <span className="flex-1 text-sm font-bold text-slate-600">{label}</span>
+      <input className={inputClass + ' !w-20 text-center'} inputMode="numeric" aria-label={label} value={v} onChange={(e) => set(e.target.value)} />
+      <span className="text-sm text-slate-500 w-10">dia(s)</span>
+    </div>
+  );
+  return (
+    <Card className="space-y-3">
+      <SectionTitle>⏳ Espera dos desejos</SectionTitle>
+      <p className="text-sm text-slate-500">Quanto mais caro o desejo, mais tempo ele espera antes de a criança decidir. A espera só funciona se vocês cumprirem o combinado depois: se ela ainda quiser, levem a sério o pedido.</p>
+      {row(`Barato (até 1 mesada)`, small, setSmall)}
+      {row(`Médio (até 4 mesadas)`, mid, setMid)}
+      {row(`Caro (mais de 4 mesadas)`, big, setBig)}
+      <Button variant="soft" className="w-full" onClick={save}>Salvar espera</Button>
+    </Card>
   );
 }

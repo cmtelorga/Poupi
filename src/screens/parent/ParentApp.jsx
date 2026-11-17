@@ -12,6 +12,7 @@ import { WEEKDAYS, nextWeekday, weekdayOf, formatDate } from '../../domain/dates
 import * as E from '../../domain/engine.js';
 import { LESSONS } from '../../domain/lessons.js';
 import { SHOP } from '../../domain/shop.js';
+import { weeklyReport } from '../../domain/reports.js';
 import { TasksPage, JourneyPage, FamilyPage, HistoryPage, SettingsPage } from './pages.jsx';
 
 export default function ParentApp({ onExit }) {
@@ -154,7 +155,18 @@ function ParentHome({ goTo }) {
 }
 
 function KidSummary({ kid, onEntry }) {
-  const { today, act, notify } = useStore();
+  const { state, today, act, notify } = useStore();
+  const rv = E.reviewSummary(state, kid.id);
+  const answered = Object.values(rv).reduce((a, o) => a + o.bom + o.meio + o.ruim, 0);
+
+  // Compartilhar é sempre uma ação do responsável (nada é enviado sozinho).
+  const share = async () => {
+    const text = weeklyReport(state, kid, today);
+    try {
+      if (navigator.share) await navigator.share({ text });
+      else { await navigator.clipboard.writeText(text); notify('Resumo copiado! Cole onde quiser.'); }
+    } catch { /* o responsável cancelou */ }
+  };
   const c = color(kid.color);
   const tasksToday = (kid.taskLog[today] || []).map((id) => kid.familyTasks.find((t) => t.id === id)).filter(Boolean);
   const wearing = SHOP.find((i) => i.id === kid.wearing)?.emoji;
@@ -166,7 +178,7 @@ function KidSummary({ kid, onEntry }) {
         </div>
         <div className="flex-1">
           <p className="font-black text-lg text-slate-800">{kid.name}, {kid.age}</p>
-          <p className="text-xs font-bold text-slate-500">Nível {E.levelFor(kid.starsEarned)} · 🔥 {E.weekStreak(kid, today)} sem. · 📚 {kid.lessonsDone.length}/12</p>
+          <p className="text-xs font-bold text-slate-500">Nível {E.levelFor(kid.starsEarned)} · 🔥 {E.weekStreak(kid, today)} sem. ativas · 📚 {kid.lessonsDone.length}/{LESSONS.length}</p>
         </div>
         <div className="text-right">
           <p className="text-xs text-slate-400 font-bold">Total</p>
@@ -178,6 +190,13 @@ function KidSummary({ kid, onEntry }) {
         <span>🏦 Banco: <b>{brlShort(kid.bank)}</b></span>
         {kid.goal && <span>{kid.goal.emoji} {Math.min(100, Math.round((E.goalProgress(kid) / kid.goal.target) * 100))}%</span>}
       </div>
+
+      {answered > 0 && (
+        <p className="text-sm text-slate-600 mt-3 bg-indigo-50 rounded-xl px-3 py-2">
+          💭 Reflexões: gastos que "valeram" {rv.gasto.bom} de {rv.gasto.bom + rv.gasto.meio + rv.gasto.ruim}
+          {rv.doacao.bom + rv.doacao.meio + rv.doacao.ruim > 0 && ` · doações que deixaram ${kid.name} feliz(a): ${rv.doacao.bom} de ${rv.doacao.bom + rv.doacao.meio + rv.doacao.ruim}`}. Bom assunto para conversar.
+        </p>
+      )}
 
       <div className="mt-3">
         <p className="text-xs font-bold text-slate-400 uppercase mb-1">Ajudou em casa hoje</p>
@@ -191,6 +210,7 @@ function KidSummary({ kid, onEntry }) {
         <Button variant="soft" size="sm" onClick={() => onEntry('out')}>− Saída</Button>
         <Button variant="warm" size="sm" onClick={() => { act(E.thankKid, kid.id); notify(`💛 Obrigado enviado para ${kid.name}`); }}>💛 Obrigado</Button>
       </div>
+      <Button variant="ghost" size="sm" className="w-full mt-2" onClick={share}>📤 Compartilhar resumo da semana</Button>
     </Card>
   );
 }

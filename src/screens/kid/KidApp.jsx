@@ -13,6 +13,7 @@ import { isLittle } from '../../domain/state.js';
 import { badgesFor } from '../../domain/achievements.js';
 import { SHOP } from '../../domain/shop.js';
 import { SpendModal, DonateModal, BankModal, FamilyModal } from './modals.jsx';
+import { SESSION_BREAK_MINUTES } from '../../domain/config.js';
 import { BankPage, DreamsPage, LearnPage, MePage } from './pages.jsx';
 
 export default function KidApp({ kidId, onExit }) {
@@ -22,6 +23,14 @@ export default function KidApp({ kidId, onExit }) {
   const c = color(kid.color);
   const [tab, setTab] = useState('home');
   const [celebrate, setCelebrate] = useState(null);
+  const [breakAsked, setBreakAsked] = useState(false);
+  const [breakDismissed, setBreakDismissed] = useState(false);
+
+  // Pausa gentil (não bloqueia): sessões curtas, sem notificações insistentes.
+  useEffect(() => {
+    const t = setTimeout(() => setBreakAsked(true), SESSION_BREAK_MINUTES * 60_000);
+    return () => clearTimeout(t);
+  }, []);
 
   // Ao entrar: mostra mesada/juros que chegaram.
   useEffect(() => {
@@ -66,7 +75,7 @@ export default function KidApp({ kidId, onExit }) {
             <div className="flex gap-1.5 mt-1 flex-wrap text-xs font-bold">
               <span className="bg-white/20 rounded-full px-2 py-0.5">Nível {level}</span>
               <span className="bg-white/20 rounded-full px-2 py-0.5">⭐ {kid.stars}</span>
-              {streak > 0 && <span className="bg-white/20 rounded-full px-2 py-0.5">🔥 {streak} {streak === 1 ? 'semana' : 'semanas'}</span>}
+              {streak > 0 && <span className="bg-white/20 rounded-full px-2 py-0.5">🔥 {streak} {streak === 1 ? 'semana ativa' : 'semanas ativas'}</span>}
             </div>
           </div>
           <button type="button" onClick={onExit} className="bg-white/20 rounded-xl px-3 min-h-[44px] text-sm font-bold">Trocar</button>
@@ -74,6 +83,13 @@ export default function KidApp({ kidId, onExit }) {
       </header>
 
       <main className="max-w-md mx-auto px-4 -mt-8 space-y-4">
+        {breakAsked && !breakDismissed && (
+          <Card className="bg-sky-50 border-2 border-sky-100">
+            <p className="font-black text-sky-900">☀️ Que tal uma pausa?</p>
+            <p className="text-sm text-sky-800 mt-1">Você já usou o Poupi por um tempinho. Que tal brincar lá fora e contar para alguém o que aprendeu?</p>
+            <Button variant="soft" size="sm" className="mt-3" onClick={() => setBreakDismissed(true)}>Continuar mais um pouco</Button>
+          </Card>
+        )}
         {tab === 'home' && <KidHome kid={kid} little={little} goTo={setTab} />}
         {tab === 'bank' && <BankPage kid={kid} little={little} />}
         {tab === 'dreams' && <DreamsPage kid={kid} little={little} />}
@@ -109,6 +125,8 @@ function KidHome({ kid, little, goTo }) {
 
   return (
     <div className="space-y-4 fade-in">
+      <ReflectionCard kid={kid} little={little} />
+
       {kid.thanksPending > 0 && (
         <Card className="bg-gradient-to-br from-amber-50 to-pink-50 border-2 border-amber-200 pop">
           <div className="flex items-center gap-3">
@@ -244,5 +262,41 @@ function KidHome({ kid, little, goTo }) {
       )}
       {modal === 'banco' && <BankModal kid={kid} mode="deposit" onClose={() => setModal(null)} />}
     </div>
+  );
+}
+
+
+/**
+ * Reflexão sem nota e sem estrelas: "valeu a pena?" (7 dias depois de gastar)
+ * e "como você se sentiu?" (depois de doar). Prêmios por doar ou refletir
+ * reduziriam a motivação própria (Deci et al., 1999; Warneken & Tomasello, 2008).
+ */
+function ReflectionCard({ kid, little }) {
+  const { state, act, today, notify } = useStore();
+  const pending = E.pendingReviews(state, kid.id, today);
+  if (!pending.length) return null;
+  const r = pending[pending.length - 1];
+  const donation = r.kind === 'doacao';
+  const options = donation
+    ? [['bom', '😊', 'Feliz'], ['meio', '😐', 'Normal'], ['ruim', '😕', 'Não gostei']]
+    : [['bom', '👍', 'Valeu!'], ['meio', '🤷', 'Mais ou menos'], ['ruim', '👎', 'Não valeu']];
+  const question = donation ? `Você doou ${brlShort(r.amount)} (${r.title}). Como você se sentiu?` : `Você gastou ${brlShort(r.amount)} em "${r.title}". Valeu a pena?`;
+  return (
+    <Card className="border-2 border-indigo-100 pop">
+      <p className="text-xs font-black text-indigo-500 uppercase">{donation ? 'Pensando em quem ajudou' : 'Olhando para trás'}</p>
+      <div className="flex items-center gap-3 mt-1">
+        {little && <Speak text={question} />}
+        <p className="font-black text-slate-800">{question}</p>
+      </div>
+      <div className="grid grid-cols-3 gap-2 mt-3">
+        {options.map(([k, e, l]) => (
+          <button key={k} type="button" onClick={() => { act(E.answerReview, r.id, k, today); notify('Obrigado por pensar nisso 💭'); }}
+            className="rounded-2xl bg-slate-50 border-2 border-slate-100 min-h-[72px] flex flex-col items-center justify-center font-bold text-sm active:bg-indigo-50">
+            <span className="text-3xl" aria-hidden>{e}</span>{l}
+          </button>
+        ))}
+      </div>
+      <p className="text-xs text-slate-500 mt-2">Não tem resposta certa. Pensar nisso ajuda a decidir melhor da próxima vez.</p>
+    </Card>
   );
 }

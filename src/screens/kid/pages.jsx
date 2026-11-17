@@ -6,6 +6,7 @@ import { brlShort } from '../../domain/money.js';
 import { daysBetween, formatDate } from '../../domain/dates.js';
 import * as E from '../../domain/engine.js';
 import { LESSONS } from '../../domain/lessons.js';
+import { MARKET_REF } from '../../domain/config.js';
 import { BADGES } from '../../domain/achievements.js';
 import { SHOP } from '../../domain/shop.js';
 import { BankModal, GoalModal, WishModal, SpendModal } from './modals.jsx';
@@ -33,7 +34,7 @@ export function BankPage({ kid, little }) {
             <p className="text-3xl font-black">{brlShort(kid.bank)}</p>
             <div className="flex justify-between items-end mt-4">
               <p className="font-bold tracking-widest uppercase">{kid.name}</p>
-              <p className="text-sm font-bold">rende {rate}% ao mês</p>
+              <p className="text-sm font-bold">bônus da família: {rate}% ao mês</p>
             </div>
           </div>
         </div>
@@ -45,13 +46,13 @@ export function BankPage({ kid, little }) {
         {little ? (
           <div className="flex items-center gap-3 mb-4">
             <Speak text="Quando você guarda dinheiro no banco, ele vira árvore. Todo mês, o banco te dá frutinhas, que são os juros." />
-            <p className="font-bold text-slate-700">Guardou, plantou! Todo mês nascem 🍎.</p>
+            <p className="font-bold text-slate-700">Guardou, plantou! Todo mês nascem 🍎 de bônus.</p>
           </div>
         ) : (
           <div className="mb-4 space-y-1">
             <p className="text-slate-600">Guardado no banco: <b className="text-slate-800">{brlShort(kid.bank)}</b></p>
-            <p className="text-slate-600">Juros ganhos até hoje: <b className="text-emerald-600">{brlShort(kid.interestEarned)}</b></p>
-            {kid.bank > 0 && <p className="text-slate-600">No dia 1º você deve ganhar: <b className="text-emerald-600">+{brlShort(nextMonthInterest)}</b></p>}
+            <p className="text-slate-600">Bônus ganho até hoje: <b className="text-emerald-600">{brlShort(kid.interestEarned)}</b></p>
+            {kid.bank > 0 && <p className="text-slate-600">No dia 1º o bônus deve ser: <b className="text-emerald-600">+{brlShort(nextMonthInterest)}</b></p>}
           </div>
         )}
         <div className="grid grid-cols-2 gap-3">
@@ -68,9 +69,16 @@ export function BankPage({ kid, little }) {
   );
 }
 
-/** "E se eu deixar guardado?" — torna visível o crescimento exponencial (Stango & Zinman, 2009). */
+/**
+ * "E se eu deixar guardado?" — torna visível o crescimento exponencial
+ * (Stango & Zinman, 2009). Mostra também o "cartão de realidade": quanto
+ * renderia num banco de verdade, para o bônus da família não virar a
+ * ideia de que o dinheiro sempre cresce tão rápido.
+ */
 function InterestSimulator({ kid }) {
-  const points = [3, 6, 12].map((m) => ({ m, v: Math.round(kid.bank * Math.pow(1 + kid.interestBps / 10000, m)) }));
+  const grow = (bps, m) => Math.round(kid.bank * Math.pow(1 + bps / 10000, m));
+  const points = [3, 6, 12].map((m) => ({ m, v: grow(kid.interestBps, m), real: grow(MARKET_REF.bps, m) }));
+  const higher = kid.interestBps > MARKET_REF.bps;
   return (
     <Card>
       <SectionTitle>🔮 E se eu deixar guardado?</SectionTitle>
@@ -84,6 +92,22 @@ function InterestSimulator({ kid }) {
         ))}
       </div>
       <p className="text-xs text-slate-500 mt-3">Sem colocar nem tirar nada. Os juros de um mês também rendem no mês seguinte: isso é juros compostos.</p>
+      <div className="mt-3 bg-amber-50 border-2 border-amber-100 rounded-2xl p-3">
+        <p className="text-sm font-black text-amber-800">🏦 E {MARKET_REF.label}?</p>
+        <div className="grid grid-cols-3 gap-2 text-center mt-2">
+          {points.map((p) => (
+            <div key={p.m}>
+              <p className="text-xs font-bold text-amber-700">{p.m} meses</p>
+              <p className="font-black text-slate-800">{brlShort(p.real)}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-amber-800 mt-2">
+          {higher
+            ? 'O bônus da sua família é maior que o de um banco de verdade: é um presente para ajudar você a ver o dinheiro crescer. Fora de casa, o rendimento é menor.'
+            : 'Um banco de verdade paga mais ou menos isso (a taxa muda com o tempo).'}
+        </p>
+      </div>
     </Card>
   );
 }
@@ -144,7 +168,7 @@ export function DreamsPage({ kid, little }) {
 
       <Card>
         <SectionTitle right={<Button variant="soft" size="sm" onClick={() => setModal('wish')}>+ Desejo</Button>}>💭 Lista de desejos</SectionTitle>
-        <p className="text-sm text-slate-500 -mt-2 mb-3">{little ? 'Espere 1 dia. Ainda quer? Então decida!' : 'Todo desejo espera 1 dia. Depois você decide com calma: pedir ou desistir.'}</p>
+        <p className="text-sm text-slate-500 -mt-2 mb-3">{little ? 'Espere um pouquinho. Ainda quer? Então decida!' : 'Todo desejo espera um tempo (quanto mais caro, mais tempo). Depois você decide com calma: pedir ou desistir.'}</p>
         {kid.wishes.length === 0 && <Empty emoji="💭">Nenhum desejo por enquanto.</Empty>}
         <div className="space-y-2">
           {kid.wishes.map((w) => {
@@ -157,7 +181,7 @@ export function DreamsPage({ kid, little }) {
                     <p className="font-bold">{w.title}</p>
                     <p className="text-xs text-slate-500">{w.price ? brlShort(w.price) + ' · ' : ''}desde {formatDate(w.date)}</p>
                   </div>
-                  {!ready && <span className="text-xs font-bold text-indigo-500">⏳ amanhã</span>}
+                  {!ready && (() => { const d = E.wishDaysLeft(w, today); return <span className="text-xs font-bold text-indigo-500">⏳ {d === 1 ? 'amanhã' : `em ${d} dias`}</span>; })()}
                 </div>
                 {ready && (
                   <div className="grid grid-cols-2 gap-2 mt-3">
@@ -217,20 +241,22 @@ export function LearnPage({ kid, little }) {
 
       <Card>
         <SectionTitle>🗺️ Minha trilha</SectionTitle>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {LESSONS.map((l, i) => {
             const done = doneIds.includes(l.id);
             const avail = i < unlocked;
             return (
-              <button key={l.id} type="button" disabled={!avail} onClick={() => setOpen(l)} aria-label={avail ? l.title : 'Lição bloqueada'}
-                className={cx('aspect-square rounded-2xl flex flex-col items-center justify-center text-3xl', done ? 'bg-emerald-100' : avail ? 'bg-indigo-100' : 'bg-slate-100 opacity-50')}>
-                {avail ? l.emoji : '🔒'}
-                {done && <span className="text-[10px] font-black text-emerald-700">✓</span>}
+              <button key={l.id} type="button" disabled={!avail} onClick={() => setOpen(l)}
+                aria-label={avail ? `${l.title}${done ? ' (feita)' : ''}` : `Lição ${i + 1}: ${l.title}, ainda bloqueada`}
+                className={cx('rounded-2xl flex flex-col items-center justify-center p-1 min-h-[88px]', done ? 'bg-emerald-100' : avail ? 'bg-indigo-100' : 'bg-slate-100 opacity-60')}>
+                <span className="text-3xl" aria-hidden>{avail ? l.emoji : '🔒'}</span>
+                <span className="text-[11px] font-bold leading-tight text-center text-slate-700 mt-1">{l.title}</span>
+                {done && <span className="text-[11px] font-black text-emerald-700">✓ feita</span>}
               </button>
             );
           })}
         </div>
-        <p className="text-xs text-slate-400 mt-3">Uma lição nova por semana: pouco e sempre ensina mais que muito de uma vez.</p>
+        <p className="text-xs text-slate-500 mt-3">Uma lição nova por semana: pouco e sempre ensina mais que muito de uma vez. As lições bloqueadas abrem uma por semana. Você pode revisar as que já fez quando quiser.</p>
       </Card>
     </div>
   );
@@ -239,7 +265,18 @@ export function LearnPage({ kid, little }) {
 function Lesson({ lesson, kid, little, review, onDone, onComplete }) {
   const v = little ? lesson.little : lesson.big;
   const options = useMemo(() => shuffle(v.options), [v]);
-  const [phase, setPhase] = useState('read');
+  // Prática de recuperação (Roediger & Karpicke, 2006): antes de uma lição NOVA, 1 pergunta de uma lição já feita.
+  const recall = useMemo(() => {
+    if (review) return null;
+    const done = kid.lessonsDone.map((d) => LESSONS.find((x) => x.id === d.id)).filter((x) => x && x.id !== lesson.id);
+    if (!done.length) return null;
+    const pick = done[Math.floor(Math.random() * done.length)];
+    const rv = little ? pick.little : pick.big;
+    return { lesson: pick, v: rv, options: shuffle(rv.options) };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lesson.id]);
+  const [phase, setPhase] = useState(recall ? 'recall' : 'read');
+  const [recallPick, setRecallPick] = useState(null);
   const [wrong, setWrong] = useState([]);
 
   const answer = (o) => {
@@ -261,6 +298,35 @@ function Lesson({ lesson, kid, little, review, onDone, onComplete }) {
         </div>
         <div className="text-center text-7xl my-2">{lesson.emoji}</div>
         <h2 className="text-2xl font-black text-slate-800 text-center">{lesson.title}</h2>
+
+        {phase === 'recall' && recall && (
+          <>
+            <p className="text-xs font-black text-indigo-500 uppercase text-center mt-4">Lembra da lição passada? ({recall.lesson.emoji} {recall.lesson.title})</p>
+            <div className="flex gap-3 items-center mt-2">
+              {little && <Speak text={`${recall.v.quiz} ${recall.v.options.map((o) => o.t).join(', ou ')}?`} />}
+              <p className="font-black text-slate-800 text-xl">{recall.v.quiz}</p>
+            </div>
+            <div className={cx('mt-4 gap-3', little ? 'grid grid-cols-2' : 'space-y-2')}>
+              {recall.options.map((o) => {
+                const chosen = recallPick !== null;
+                const right = o.i === recall.v.correct;
+                return (
+                  <button key={o.i} type="button" disabled={chosen} onClick={() => setRecallPick(o.i)}
+                    className={cx('w-full rounded-2xl font-bold border-2', little ? 'p-4 flex flex-col items-center text-lg' : 'p-4 text-left',
+                      !chosen ? 'bg-slate-50 border-slate-100 active:bg-indigo-50' : right ? 'bg-emerald-50 border-emerald-300' : o.i === recallPick ? 'bg-slate-100 border-slate-200 text-slate-400' : 'bg-slate-50 border-slate-100 text-slate-400')}>
+                    {o.e && <span className={little ? 'text-5xl mb-1' : 'mr-2'}>{o.e}</span>}{o.t}
+                  </button>
+                );
+              })}
+            </div>
+            {recallPick !== null && (
+              <>
+                <p className="text-center font-bold text-slate-600 mt-3">{recallPick === recall.v.correct ? 'Isso! Você lembrou 👏' : 'Sem problema: lembrar é treino. A resposta certa está em verde 💚'}</p>
+                <Button size="lg" className="w-full mt-4" onClick={() => setPhase('read')}>{little ? 'Vamos 👉' : 'Ir para a lição nova'}</Button>
+              </>
+            )}
+          </>
+        )}
 
         {phase === 'read' && (
           <>

@@ -4,10 +4,11 @@
  */
 import { useState } from 'react';
 import { useStore } from '../store.jsx';
-import { Button, Card, Field, MoneyInput, EmojiPicker, PinPad, inputClass, cx, color } from '../ui/kit.jsx';
+import { Button, Card, Field, MoneyInput, EmojiPicker, PinPad, PasswordModal, inputClass, cx, color } from '../ui/kit.jsx';
+import { PrivacyModal } from './Privacy.jsx';
 import { newState } from '../domain/state.js';
 import { addKid, runAutomations } from '../domain/engine.js';
-import { buildDemo, DEMO_PIN } from '../domain/demo.js';
+import { buildDemo } from '../domain/demo.js';
 import { WEEKDAYS } from '../domain/dates.js';
 import { toCents, brlShort } from '../domain/money.js';
 import { ANIMALS, COLORS } from '../domain/shop.js';
@@ -20,6 +21,9 @@ export default function Onboarding() {
   const [pinError, setPinError] = useState('');
   const [weekday, setWeekday] = useState(6);
   const [kids, setKids] = useState([]);
+  const [consent, setConsent] = useState(false);
+  const [privacy, setPrivacy] = useState(false);
+  const [askPass, setAskPass] = useState(null); // { resolve }
 
   const finish = () => {
     let s = newState({ pin, allowanceWeekday: weekday });
@@ -30,7 +34,12 @@ export default function Onboarding() {
   const restore = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    try { replace(await readBackup(file)); notify('Backup restaurado!'); } catch (err) { notify(err.message, 'error'); }
+    try {
+      const data = await readBackup(file, () => new Promise((resolve) => setAskPass({ resolve })));
+      replace(data);
+      notify('Backup restaurado!');
+    } catch (err) { notify(err.message, 'error'); }
+    e.target.value = '';
   };
 
   if (step === 'welcome') {
@@ -40,17 +49,26 @@ export default function Onboarding() {
           <div className="text-8xl float" aria-hidden>🐷</div>
           <h1 className="text-5xl font-black mt-2">Poupi</h1>
           <p className="text-white/90 text-lg mt-2">Educação financeira para crianças, com a família junto.</p>
-          <div className="mt-8 space-y-3">
+          <ul className="mt-5 space-y-2 text-left text-white/95 font-semibold text-sm bg-white/10 rounded-2xl p-4">
+            <li>🫙 A mesada se divide em 3 potes: <b>gastar, poupar e doar</b>.</li>
+            <li>⏳ Desejos esperam um tempo antes da decisão: nada de compra por impulso.</li>
+            <li>💬 Os pais aprendem junto, com uma conversa sugerida por semana.</li>
+            <li>🔒 Sem anúncios e sem cadastro: tudo fica só neste aparelho.</li>
+          </ul>
+          <div className="mt-6 space-y-3">
             <Button variant="white" size="lg" className="w-full" onClick={() => setStep('how')}>Criar minha família</Button>
             <Button variant="ghost" className="w-full !text-white border-2 border-white/40" onClick={() => replace(buildDemo(today))}>
-              👀 Ver demonstração (PIN {DEMO_PIN})
+              👀 Ver demonstração
             </Button>
-            <label className="block text-white/80 text-sm underline cursor-pointer pt-2">
-              Restaurar um backup
+            <label className="w-full min-h-[48px] rounded-2xl border-2 border-white/40 text-white font-bold flex items-center justify-center cursor-pointer">
+              ⬆️ Restaurar um backup
               <input type="file" accept="application/json" className="hidden" onChange={restore} />
             </label>
+            <button type="button" onClick={() => setPrivacy(true)} className="text-white/90 text-sm font-bold underline min-h-[44px]">Privacidade: como o Poupi guarda os dados</button>
           </div>
         </div>
+        {privacy && <PrivacyModal onClose={() => setPrivacy(false)} />}
+        {askPass && <PasswordModal title="🔐 Backup protegido" hint="Digite a senha que você criou ao baixar este backup." submitLabel="Abrir" onClose={() => { askPass.resolve(''); setAskPass(null); }} onSubmit={(pw) => { askPass.resolve(pw); setAskPass(null); }} />}
       </div>
     );
   }
@@ -67,14 +85,29 @@ export default function Onboarding() {
               <li className="flex gap-3"><span className="text-3xl">🧹</span><span><b>Ajudar em casa não é pago</b> — vale um “obrigado”. Já os <b>trabalhos extras</b> (combinados antes) rendem dinheiro.</span></li>
               <li className="flex gap-3"><span className="text-3xl">💬</span><span><b>Você também aprende.</b> A Jornada dos Pais explica a ciência por trás de cada escolha e sugere um papo por semana.</span></li>
             </ul>
-            <Button size="lg" className="w-full mt-6" onClick={() => setStep('pin')}>Vamos lá</Button>
+            <Button size="lg" className="w-full mt-6" onClick={() => setStep('consent')}>Vamos lá</Button>
+          </Card>
+        )}
+
+        {step === 'consent' && (
+          <Card>
+            <h2 className="text-2xl font-extrabold text-slate-800">Antes de começar</h2>
+            <p className="text-slate-600 mt-2">O Poupi guarda nomes ou apelidos, idades e valores <b>só neste aparelho</b>. Não envia nada para a internet, não tem anúncios e não rastreia ninguém.</p>
+            <button type="button" className="mt-3 text-indigo-600 font-bold underline min-h-[44px]" onClick={() => setPrivacy(true)}>Ler como os dados são guardados</button>
+            <label className="flex items-start gap-3 mt-3 bg-slate-50 rounded-2xl p-4 cursor-pointer">
+              <input type="checkbox" className="mt-1 w-6 h-6 accent-indigo-500" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+              <span className="text-slate-700 font-semibold">Sou pai, mãe ou responsável legal pelas crianças que vou cadastrar e concordo com o uso descrito.</span>
+            </label>
+            <Button size="lg" className="w-full mt-5" disabled={!consent} onClick={() => { setStep('pin'); }}>Continuar</Button>
+            <Button variant="ghost" className="w-full mt-2" onClick={() => setStep('how')}>Voltar</Button>
+            {privacy && <PrivacyModal onClose={() => setPrivacy(false)} />}
           </Card>
         )}
 
         {step === 'pin' && (
           <Card>
             <PinPad title="Crie o PIN dos pais" subtitle="4 números. Ele protege o painel dos pais."
-              onSubmit={(p) => { setPin(p); setPinError(''); setStep('pin2'); }} onCancel={() => setStep('how')} />
+              onSubmit={(p) => { setPin(p); setPinError(''); setStep('pin2'); }} onCancel={() => setStep('consent')} />
           </Card>
         )}
         {step === 'pin2' && (

@@ -203,22 +203,23 @@ export function GoalModal({ kid, onClose, title: modalTitle = '🎯 Meu sonho', 
 }
 
 export function WishModal({ kid, onClose }) {
-  const { act, today, notify } = useStore();
+  const { state, act, today, notify } = useStore();
   const little = isLittle(kid);
   const [title, setTitle] = useState('');
   const [emoji, setEmoji] = useState(SPEND_EMOJIS[0]);
   const [amount, setAmount] = useState(0);
   const save = () => {
     act(E.addWish, kid.id, { title: title.trim() || emoji, emoji, price: amount }, today);
-    notify(little ? '💭 Guardado! Amanhã você decide.' : '💭 Na lista! Volte amanhã para decidir.');
+    const d = E.wishWaitDays(state, kid, amount);
+    notify(little ? '💭 Guardado! Já já você decide.' : `💭 Na lista! Volte ${d === 1 ? 'amanhã' : `em ${d} dias`} para decidir.`);
     onClose();
   };
   return (
     <Modal title="💭 Novo desejo" onClose={onClose}>
       <div className="space-y-4">
         <div className="flex items-center gap-3 bg-indigo-50 rounded-2xl p-3">
-          <Speak text="Escolha o que você quer. Amanhã você decide se ainda quer." />
-          <p className="text-indigo-900 font-semibold text-sm">Desejos esperam 1 dia. Se ainda quiser amanhã, é um desejo de verdade!</p>
+          <Speak text="Escolha o que você quer. Daqui a pouco você decide se ainda quer." />
+          <p className="text-indigo-900 font-semibold text-sm">Desejos esperam um tempo (quanto mais caro, mais tempo). Se você ainda quiser depois, é um desejo de verdade!</p>
         </div>
         <EmojiPicker options={SPEND_EMOJIS} value={emoji} onChange={setEmoji} />
         {!little && <input className={inputClass} maxLength={40} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="O que é?" />}

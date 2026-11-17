@@ -214,10 +214,11 @@ export function Toast({ toast }) {
 }
 
 /** Teclado numérico para PIN (grande, fácil de tocar). */
-export function PinPad({ title, subtitle, onSubmit, onCancel, error }) {
+export function PinPad({ title, subtitle, onSubmit, onCancel, error, disabled }) {
   const [pin, setPin] = useState('');
   useEffect(() => { if (error) setPin(''); }, [error]);
   const press = (d) => {
+    if (disabled) return;
     const next = (pin + d).slice(0, 4);
     setPin(next);
     if (next.length === 4) setTimeout(() => { onSubmit(next); setPin(''); }, 120);
@@ -251,10 +252,10 @@ export function TabBar({ items, value, onChange, activeClass = 'bg-gradient-to-b
       <div className="max-w-md mx-auto flex justify-around px-2">
         {items.map((t) => (
           <button key={t.k} type="button" onClick={() => onChange(t.k)} aria-label={t.label} aria-current={value === t.k ? 'page' : undefined}
-            className={cx('relative flex flex-col items-center justify-center rounded-2xl transition', big ? 'w-16 h-16' : 'w-14 h-14',
+            className={cx('relative flex flex-col items-center justify-center rounded-2xl transition', big ? 'w-[72px] h-[68px]' : 'w-16 h-[60px]',
               value === t.k ? activeClass : 'text-slate-500')}>
             <span className={big ? 'text-2xl' : 'text-xl'}>{t.icon}</span>
-            <span className="text-[10px] font-bold leading-tight mt-0.5">{t.label}</span>
+            <span className="text-xs font-bold leading-tight mt-0.5">{t.label}</span>
             {t.badge > 0 && (
               <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-black rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">{t.badge}</span>
             )}
@@ -280,5 +281,27 @@ export function Empty({ emoji, children }) {
       <div className="text-4xl mb-2">{emoji}</div>
       <p className="font-semibold">{children}</p>
     </div>
+  );
+}
+
+
+/** Pede uma senha (backup criptografado). `confirm`: pede duas vezes ao criar. */
+export function PasswordModal({ title, hint, confirm, optional, submitLabel = 'Continuar', onSubmit, onClose }) {
+  const [a, setA] = useState('');
+  const [b, setB] = useState('');
+  const mismatch = confirm && a && b && a !== b;
+  const ok = optional ? (!a || (a.length >= 6 && (!confirm || a === b))) : a.length >= (confirm ? 6 : 1) && (!confirm || a === b);
+  return (
+    <Modal title={title} onClose={onClose}>
+      <div className="space-y-4">
+        {hint && <p className="text-sm text-slate-500">{hint}</p>}
+        <input type="password" autoComplete="off" className={inputClass} value={a} onChange={(e) => setA(e.target.value)}
+          placeholder={optional ? 'Senha (deixe vazio para não criptografar)' : 'Senha'} aria-label="Senha" />
+        {confirm && a && <input type="password" autoComplete="off" className={inputClass} value={b} onChange={(e) => setB(e.target.value)} placeholder="Repita a senha" aria-label="Repita a senha" />}
+        {confirm && a && a.length < 6 && <p className="text-xs text-rose-500 font-bold">Use pelo menos 6 caracteres. Guarde bem: sem a senha, não dá para abrir o backup.</p>}
+        {mismatch && <p className="text-xs text-rose-500 font-bold">As senhas não são iguais.</p>}
+        <Button size="lg" className="w-full" disabled={!ok} onClick={() => onSubmit(a)}>{submitLabel}</Button>
+      </div>
+    </Modal>
   );
 }

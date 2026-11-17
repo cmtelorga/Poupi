@@ -3,11 +3,14 @@
  * O perfil escolhido NÃO é salvo: num aparelho compartilhado, o app sempre
  * volta para "Quem é você?", e o painel dos pais sempre pede PIN.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore } from './store.jsx';
 import { Toast, Modal, PinPad, Avatar, cx, color } from './ui/kit.jsx';
 import { hashPin } from './domain/ids.js';
 import { SHOP } from './domain/shop.js';
+import { DEMO_PIN } from './domain/demo.js';
+import { emptyLock, registerFail, isLocked, secondsLeft, triesLeft, loadLock, saveLock, formatWait } from './domain/pinLock.js';
+import { PrivacyModal } from './screens/Privacy.jsx';
 import Onboarding from './screens/Onboarding.jsx';
 import KidApp from './screens/kid/KidApp.jsx';
 import ParentApp from './screens/parent/ParentApp.jsx';
@@ -39,6 +42,34 @@ function ProfilePicker({ onPick }) {
   const { state } = useStore();
   const [askPin, setAskPin] = useState(false);
   const [error, setError] = useState('');
+  const [privacy, setPrivacy] = useState(false);
+  const [lock, setLock] = useState(loadLock);
+  const [now, setNow] = useState(Date.now());
+
+  // Contagem regressiva do bloqueio (só roda enquanto está bloqueado).
+  useEffect(() => {
+    if (!isLocked(lock, Date.now())) return undefined;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [lock]);
+  const locked = isLocked(lock, now);
+
+  const tryPin = (p) => {
+    if (isLocked(lock, Date.now())) return;
+    if (hashPin(p) === state.pinHash) {
+      saveLock(emptyLock());
+      setLock(emptyLock());
+      onPick({ screen: 'parent' });
+      return;
+    }
+    const next = registerFail(lock, Date.now());
+    saveLock(next);
+    setLock(next);
+    setNow(Date.now());
+    setError(isLocked(next, Date.now())
+      ? `Muitas tentativas. Espere ${formatWait(secondsLeft(next, Date.now()))}.`
+      : `PIN incorreto. Restam ${triesLeft(next)} tentativas antes de um bloqueio.`);
+  };
   const pending = state.requests.length + state.jobs.filter((j) => j.status === 'feito').length;
 
   return (
@@ -63,16 +94,23 @@ function ProfilePicker({ onPick }) {
         <button type="button" onClick={() => { setError(''); setAskPin(true); }}
           className="relative mt-6 w-full bg-white/15 border-2 border-white/40 text-white font-extrabold rounded-2xl min-h-[56px]">
           🔒 Área dos pais
-          {pending > 0 && <span className="absolute -top-2 -right-2 bg-rose-500 rounded-full min-w-[24px] h-6 px-1.5 text-sm flex items-center justify-center">{pending}</span>}
+          {pending > 0 && (
+            <span className="absolute -top-2 -right-2 bg-rose-500 rounded-full min-w-[24px] h-6 px-1.5 text-sm flex items-center justify-center"
+              aria-label={`${pending} ${pending === 1 ? 'pedido' : 'pedidos'} esperando os pais`}>{pending}</span>
+          )}
         </button>
+        {pending > 0 && <p className="text-white/90 text-sm font-bold text-center mt-2">{pending} {pending === 1 ? 'pedido espera' : 'pedidos esperam'} os pais</p>}
+        <button type="button" onClick={() => setPrivacy(true)} className="mt-4 w-full text-white/80 text-sm font-bold underline min-h-[44px]">Privacidade</button>
       </div>
 
       {askPin && (
         <Modal title="" onClose={() => setAskPin(false)}>
-          <PinPad title="PIN dos pais" error={error} onCancel={() => setAskPin(false)}
-            onSubmit={(p) => (hashPin(p) === state.pinHash ? onPick({ screen: 'parent' }) : setError('PIN incorreto'))} />
+          <PinPad title="PIN dos pais" error={locked ? `Muitas tentativas. Espere ${formatWait(secondsLeft(lock, now))}.` : error}
+            subtitle={state.isDemo ? `Demonstração: o PIN é ${DEMO_PIN}` : undefined}
+            disabled={locked} onCancel={() => setAskPin(false)} onSubmit={tryPin} />
         </Modal>
       )}
+      {privacy && <PrivacyModal onClose={() => setPrivacy(false)} />}
     </div>
   );
 }

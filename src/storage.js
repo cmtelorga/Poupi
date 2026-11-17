@@ -8,6 +8,7 @@
  *   apagaria o histórico da família.
  */
 import { migrate } from './domain/state.js';
+import { encryptBackup, decryptBackup, isEncryptedBackup } from './domain/backup.js';
 
 const KEY = 'poupi_v1';
 
@@ -34,28 +35,48 @@ export const clearState = () => {
   try { localStorage.removeItem(KEY); } catch { /* nada a fazer */ }
 };
 
-export const exportBackup = (state) => {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+const download = (text, name) => {
+  const blob = new Blob([text], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `poupi-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = name;
   document.body.appendChild(a);
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
-export const readBackup = (file) =>
+/** Com `password`, o arquivo sai criptografado (AES-GCM). Sem senha, é o JSON simples de sempre. */
+export const exportBackup = async (state, password = '') => {
+  const day = new Date().toISOString().slice(0, 10);
+  if (password) {
+    download(JSON.stringify(await encryptBackup(state, password)), `poupi-backup-${day}.criptografado.json`);
+  } else {
+    download(JSON.stringify(state, null, 2), `poupi-backup-${day}.json`);
+  }
+};
+
+/**
+ * Lê um backup. Se estiver criptografado, chama `askPassword()` (que devolve a
+ * senha digitada). Backups antigos, sem criptografia, continuam funcionando.
+ */
+export const readBackup = (file, askPassword = async () => '') =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
-        const data = migrate(JSON.parse(reader.result));
-        if (!data || !Array.isArray(data.kids)) throw new Error('formato');
+        let data = JSON.parse(reader.result);
+        if (isEncryptedBackup(data)) {
+          const password = await askPassword();
+          if (!password) throw new Error('Senha necessária para abrir este backup.');
+          data = await decryptBackup(data, password);
+        }
+        data = migrate(data);
+        if (!data || !Array.isArray(data.kids)) throw new Error('Arquivo de backup inválido.');
         resolve(data);
-      } catch {
-        reject(new Error('Arquivo de backup inválido.'));
+      } catch (e) {
+        reject(new Error(e.message && /Senha|inválido/.test(e.message) ? e.message : 'Arquivo de backup inválido.'));
       }
     };
     reader.onerror = () => reject(new Error('Não foi possível ler o arquivo.'));
