@@ -78,7 +78,7 @@ export function Garden({ bank, interestEarned, little }) {
       <div className="bg-amber-50 px-4 py-3 text-sm text-amber-900">
         {little
           ? <>Cada 🌳 é <b>{brlShort(unit)}</b> guardado. As 🍎 aparecem quando o banco rende.</>
-          : <>Cada 🌳 = <b>{brlShort(unit)}</b> no banco. Cada 🍎 = R$ 0,50 de juros que o banco te pagou. Quanto mais tempo guardado, mais frutas.</>}
+          : <>Cada 🌳 = <b>{brlShort(unit)}</b> no banco. Cada 🍎 = R$ 0,50 de bônus que o banco da família te pagou. Quanto mais tempo guardado, mais frutas.</>}
       </div>
     </div>
   );
